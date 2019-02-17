@@ -1,0 +1,89 @@
+---
+title: "Anomaly detection (Twitter AD)"
+output: html_notebook
+---
+
+```{r}
+
+rawdata <- read.csv(file = "../data/newrawdata1.csv", header = TRUE, sep = ",")
+summary(rawdata)
+hist(rawdata$online)
+hist(rawdata$offline)
+hist(rawdata$novalue)
+```
+
+## Converting to date object
+```{r}
+library(dplyr)
+rawdata1 <- rawdata
+str(rawdata)
+str(rawdata_f)
+rawdata$time <- as.POSIXct(rawdata$datetime,tz='UTC')
+#rawdata_f <- rawdata %>% filter(time > as.POSIXct("2018-12-12 01:00:00", tz="UTC"))
+#rawdata_f$time <- as.POSIXct(rawdata_f$datetime,tz='UTC')
+```
+
+### plotting the data
+```{r}
+library("ggplot2", lib.loc="/Library/Frameworks/R.framework/Versions/3.5/Resources/library")
+ggplot(rawdata, aes(x=time, y=online )) + geom_line() + xlab("date time") + ylab("Number of online responses")
+ggplot(rawdata, aes(x=time, y=offline )) + geom_line() + xlab("date time") + ylab("Number of offline responses")
+ggplot(rawdata, aes(x=time, y=novalue )) + geom_line() + xlab("date time") + ylab("Number of novalue responses")
+```
+### Detecting anomaly using twitter library
+```{r}
+#incase if you haven't installed AnomalyDetection twitter package
+#install.packages("devtools")
+#devtools::install_github("twitter/AnomalyDetection")
+library(AnomalyDetection)
+online_ts <- NULL
+online_ts$datetime <- rawdata$time
+online_ts$data <- rawdata$online
+online_ts = as.data.frame(online_ts)
+str(online_ts)
+online_ts$data[is.na(online_ts$data)] = 0
+
+summary(online1)
+
+offline_ts <- NULL
+offline_ts$datetime <- rawdata$time
+offline_ts$data <- rawdata$offline
+offline_ts = as.data.frame(offline_ts)
+str(offline_ts)
+offline_ts$data[is.na(offline_ts$data)] = 0
+
+novalue_ts <- NULL
+novalue_ts$datetime <- rawdata$time
+novalue_ts$data <- rawdata$novalue
+novalue_ts = as.data.frame(novalue_ts)
+str(novalue_ts)
+novalue_ts$data[is.na(novalue_ts$data)] = 0
+
+par(mfrow = c(3,3))
+ggplot(online_ts, aes(x=datetime, y=data )) + geom_line() + xlab("date time") + ylab("Number of online responses")
+ggplot(offline_ts, aes(x=datetime, y=data )) + geom_line() + xlab("date time") + ylab("Number of offline responses")
+ggplot(novalue_ts, aes(x=datetime, y=data )) + geom_line() + xlab("date time") + ylab("Number of novalue responses")
+
+
+res_online = AnomalyDetectionTs(online_ts, max_anoms=0.01, alpha = 0.05, direction='both', plot=TRUE,piecewise_median_period_weeks = 10)
+res_offline = AnomalyDetectionTs(offline_ts, max_anoms=0.01, alpha = 0.05, direction='both', plot=TRUE,piecewise_median_period_weeks = 10)
+res_novalue = AnomalyDetectionTs(novalue_ts, max_anoms=0.01, alpha = 0.05, direction='both', plot=TRUE,piecewise_median_period_weeks = 10)
+res_online$anoms$timestamp <- as.POSIXct(res_online$anoms$timestamp)
+res_offline$anoms$timestamp <- as.POSIXct(res_offline$anoms$timestamp)
+res_novalue$anoms$timestamp <- as.POSIXct(res_novalue$anoms$timestamp)
+
+
+ggplot(online_ts, aes(datetime, data)) +
+  geom_line(data=online_ts, aes(datetime, data), color='blue') +
+  geom_point(data=res_online$anoms, aes(timestamp, anoms), color='red')
+
+ggplot(offline_ts, aes(datetime, data)) +
+  geom_line(data=offline_ts, aes(datetime, data), color='blue') +
+  geom_point(data=res_offline$anoms, aes(timestamp, anoms), color='red')
+
+ggplot(novalue_ts, aes(datetime, data)) +
+  geom_line(data=novalue_ts, aes(datetime, data), color='blue') +
+  geom_point(data=res_novalue$anoms, aes(timestamp, anoms), color='red')
+
+
+```
