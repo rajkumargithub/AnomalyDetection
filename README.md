@@ -1,5 +1,5 @@
 # AnomalyDetection
-This is simple python application of Anomaly Detection implementation by [nicolassmiller](https://github.com/Marcnuth/AnomalyDetection). And I have refered the sample implementation from [wdm0006](https://github.com/wdm0006/pyculiarity).
+A simple python application for Anomaly Detection using Pyculiar (implemented by [nicolassmiller])(https://github.com/Marcnuth/AnomalyDetection). Reference: [wdm0006](https://github.com/wdm0006/pyculiarity).
 
 ### Installation
 ```{bash}
